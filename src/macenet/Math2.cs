@@ -306,4 +306,31 @@ public static class Math2
             }
         }
     }
+
+    public static double[][] VariationalNormalize(double[][] mat, double[][] hyperparameters)
+    {
+        double[][] result = Utils.CreateJaggedArray<double[][]>(mat.Length, mat[0].Length);
+
+        for (int i = 0; i < result.Length; ++i)
+        {
+            double norm = 0.0;
+
+            for (int j = 0; j < result[0].Length; ++j)
+            {
+                norm += mat[i][j] + hyperparameters[i][j];
+            }
+
+            norm = Math.Exp(Digamma(norm));
+
+            for (int j = 0; j < result[0].Length; ++j)
+            {
+                if (norm > 0)
+                {
+                    result[i][j] = Math.Exp(Digamma(mat[i][j] + hyperparameters[i][j])) / norm;
+                }
+            }
+        }
+
+        return result;
+    }
 }

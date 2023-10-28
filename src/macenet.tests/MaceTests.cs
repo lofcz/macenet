@@ -77,6 +77,7 @@ public class MaceTests
             Restarts = 1,
             Test = new MaceTestSettings
             {
+                FinalStep = MaceTestSettings.StepToEnd.FirstEStep,
                 Init = new MaceTestInit
                 {
                     Spamming = new []

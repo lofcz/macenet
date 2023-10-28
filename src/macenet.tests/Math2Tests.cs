@@ -89,7 +89,8 @@ public class Math2Tests
     [Test]
     public void TestNormalizeInPlace()
     {
-        double[][] mat = {
+        double[][] mat = 
+        {
             new[] { 1.0, 0.87 },
             new[] { 3.24, 8.55 }
         };
@@ -103,5 +104,32 @@ public class Math2Tests
             Assert.That(Utils.EqualsWithinTolerance(mat[1][0], 0.2748091603053435d));
             Assert.That(Utils.EqualsWithinTolerance(mat[1][1], 0.7251908396946565));
         });
+    }
+    
+    [Test]
+    public void TestVariationalNormalize()
+    {
+        double[][] mat =
+        {
+            new[] { 0.9643583727769215, 1.0356416272230784 },
+            new[] { 0.931675875679548, 1.0683241243204522 },
+            new [] { 0.7462993126909225, 1.2537006873090775 }
+        };
+
+        double[][] hyperparameters =
+        {
+            new [] { 0.5, 0.5 },
+            new [] { 0.5, 0.5 },
+            new [] { 0.5, 0.5 }
+        };
+
+        double[][] result = Math2.VariationalNormalize(mat, hyperparameters);
+        
+        Assert.That(Utils.EqualsWithinTolerance(result[0][0], 0.39845945672412214d));
+        Assert.That(Utils.EqualsWithinTolerance(result[0][1], 0.42592478657324556d));
+        Assert.That(Utils.EqualsWithinTolerance(result[1][0], 0.3859001602730679d));
+        Assert.That(Utils.EqualsWithinTolerance(result[1][1], 0.438547378824097d));
+        Assert.That(Utils.EqualsWithinTolerance(result[2][0], 0.31515902552688185d));
+        Assert.That(Utils.EqualsWithinTolerance(result[2][1], 0.5104370189482136d));
     }
 }

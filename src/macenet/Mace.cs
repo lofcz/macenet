@@ -24,7 +24,14 @@ public class MaceTestInit
 
 public class MaceTestSettings
 {
-    public MaceTestInit? Init { get; set; } 
+    public enum StepToEnd
+    {
+        RunToEnd,
+        FirstEStep
+    }
+    
+    public MaceTestInit? Init { get; set; }
+    public StepToEnd FinalStep { get; set; } = StepToEnd.RunToEnd;
 }
 
 public class MaceSettings
@@ -156,6 +163,17 @@ public static class Mace
             }
             
             EStep();
+
+            if (settings.Test?.FinalStep is MaceTestSettings.StepToEnd.FirstEStep)
+            {
+                return;
+            }
+
+            for (int i = 0; i < settings.Iterations; ++i)
+            {
+                MStep();
+                EStep();
+            }
         }
         
         void InitializeRun()
@@ -285,6 +303,11 @@ public static class Mace
                     }
                 }
             }
+        }
+
+        void MStep()
+        {
+            
         }
     }
 }
