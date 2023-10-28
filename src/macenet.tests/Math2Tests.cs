@@ -63,11 +63,26 @@ public class Tests
     [TestCase(0.01, 6.635646818516083d)]
     [TestCase(0.1, 3.249977377957902d)]
     [TestCase(0.5, 0.8257480618409858d)]
-    [TestCase(1, -7.915932957214796e-9)]
+    [TestCase(1, -7.915932957214796e-9d)]
     [TestCase(1.5, -0.17425195003632513d)]
     [TestCase(4, 2.5849624928052233d)]
     public void TestLog2Gamma(double n, double expected)
     {
         Assert.That(Utils.EqualsWithinTolerance(Math2.Log2Gamma(n), expected));
+    }
+
+    [Test]
+    [TestCase(0, double.NaN)]
+    [TestCase(0.000000000001, -1.0000000000005773e12d)]
+    [TestCase(-0.000000000001, 9.999312366085045e11d)]
+    [TestCase(-0.5, 0.03648997397857712d)]
+    [TestCase(1, -0.5772156649015329d)]
+    [TestCase(2, 0.42278433509846713d)]
+    [TestCase(3, 0.9227843350984671d)]
+    [TestCase(4, 1.2561176684318005d)]
+    [TestCase(5, 1.5061176684318003d)]
+    public void TestDigamma(double n, double expected)
+    {
+        Assert.That(Utils.EqualsWithinTolerance(Math2.Digamma(n), expected));
     }
 }
