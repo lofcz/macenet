@@ -1,6 +1,6 @@
 namespace macenet;
 
-public static class Utils
+internal static class Utils
 {
     public static T CreateJaggedArray<T>(params int[] lengths)
     {

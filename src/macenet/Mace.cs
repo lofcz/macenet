@@ -1,4 +1,6 @@
-﻿namespace macenet;
+﻿using System.ComponentModel;
+
+namespace macenet;
 
 /// <summary>
 /// Represents an annotation given by a <see cref="Annotator"/> to an <see cref="Item"/>.
@@ -12,6 +14,19 @@ public record MaceAnnotation(int Annotator, int Item, int Choice);
 
 public record MaceInput(int[][] WhoLabeled, int[][] Labels, HashSet<int> LabelOptions, HashSet<int> Annotators);
 
+public class MaceTestInit
+{
+    public double[][] Spamming { get; set; }
+    public double[][] Thetas { get; set; }
+    public double[][] ThetaPriors { get; set; }
+    public double[][] StrategyPriors { get; set; }
+}
+
+public class MaceTestSettings
+{
+    public MaceTestInit? Init { get; set; } 
+}
+
 public class MaceSettings
 {
     public static readonly MaceSettings Default = new MaceSettings();
@@ -23,6 +38,21 @@ public class MaceSettings
     public double Beta { get; set; } = 0.5;
     public double Smoothing { get; set; } = 0.01;
     public double Threshold { get; set; } = 1;
+    public MaceTestSettings? Test { get; set; }
+}
+
+public class MaceTestResult
+{
+    public double LogMarginalLikelihood { get; set; }
+    public double[][] KnowingExpectedCounts { get; set; }
+    public double[][] StrategyExpectedCounts { get; set; }
+    public double[][] GoldLabelMarginals { get; set; }
+}
+
+public class MaceResult 
+{
+    
+    public MaceTestResult? TestResult { get; set; }
 }
 
 public static class Mace
@@ -71,20 +101,21 @@ public static class Mace
         return new MaceInput(whoLabeledArr, labelsArr, options, annotators);
     }
     
-    public static void Evaluate(IEnumerable<MaceAnnotation> annotations, MaceSettings? settings = null)
+    public static MaceResult Evaluate(IEnumerable<MaceAnnotation> annotations, MaceSettings? settings = null)
     {
+        MaceResult result = new MaceResult();
         settings ??= MaceSettings.Default;
-        double[][] spamming, thetas, strategyExpectedCounts, knowingExpectedCounts, thetaPriors, strategyPriors, goldLabelMarginals;
-        double logMarginalLikelyHood;
+        double[][] spamming, thetas, thetaPriors, strategyPriors;
+        double logMarginalLikeliHood = 0;
         double[] entropies;
         List<MaceAnnotation> annotationsList = annotations.ToList();
         MaceInput input = ParseInput(annotationsList);
         int nInstances = input.Labels.Length;
         int nLabels = input.LabelOptions.Count;
         int nAnnotators = input.Annotators.Count;
-        goldLabelMarginals = Utils.CreateJaggedArray<double[][]>(nInstances, nLabels);
-        strategyExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
-        knowingExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
+        double[][] goldLabelMarginals = Utils.CreateJaggedArray<double[][]>(nInstances, nLabels);
+        double[][] strategyExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
+        double[][] knowingExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
         double smoothing = settings.Smoothing / nLabels;
 
         Dictionary<int, int> controlLabels = new Dictionary<int, int>();
@@ -96,11 +127,37 @@ public static class Mace
 
         for (int i = 0; i < settings.Restarts; i++)
         {
-            InitializeRun();
+            Run();
+        }
+
+        if (settings.Test is not null)
+        {
+            result.TestResult = new MaceTestResult
+            {
+                GoldLabelMarginals = goldLabelMarginals,
+                LogMarginalLikelihood = logMarginalLikeliHood,
+                KnowingExpectedCounts = knowingExpectedCounts,
+                StrategyExpectedCounts = strategyExpectedCounts
+            };
         }
         
-        return;
+        return result;
 
+        void Run()
+        {
+            InitializeRun();
+
+            if (settings.Test?.Init is not null)
+            {
+                spamming = settings.Test.Init.Spamming;
+                thetas = settings.Test.Init.Thetas;
+                thetaPriors = settings.Test.Init.ThetaPriors;
+                strategyPriors = settings.Test.Init.StrategyPriors;
+            }
+            
+            EStep();
+        }
+        
         void InitializeRun()
         {
             spamming = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
@@ -117,9 +174,116 @@ public static class Mace
                 {
                     thetas[i][j] += settings.Noise * Random.Shared.NextDouble();
                 }
-                
-                Math2.NormalizeInPlace(spamming, 0);
-                Math2.NormalizeInPlace(thetas, 0);
+            }
+            
+            Math2.NormalizeInPlace(spamming, 0);
+            Math2.NormalizeInPlace(thetas, 0);
+
+            thetaPriors = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
+            strategyPriors = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
+
+            for (int i = 0; i < nAnnotators; ++i)
+            {
+                thetaPriors[i][0] = settings.Alpha;
+                thetaPriors[i][1] = settings.Beta;
+                Array.Fill(strategyPriors[i], 10.0);
+            }
+        }
+
+        void EStep()
+        {
+            for (int i = 0; i < nInstances; ++i)
+            {
+                for (int j = 0; j < nLabels; ++j)
+                {
+                    goldLabelMarginals[i][j] = 0.0;
+                }
+            }
+
+            for (int i = 0; i < nAnnotators; ++i)
+            {
+                knowingExpectedCounts[i][0] = 0.0;
+                knowingExpectedCounts[i][1] = 0.0;
+
+                for (int j = 0; j < nLabels; ++j)
+                {
+                    strategyExpectedCounts[i][j] = 0.0;
+                }
+            }
+
+            logMarginalLikeliHood = 0.0;
+
+            for (int i = 0; i < nInstances; ++i)
+            {
+                double instanceMarginal = 0.0;
+
+                for (int j = 0; j < nLabels; ++j)
+                {
+                    double goldLabelMarginal = 1.0 / nLabels;
+
+                    if (input.Labels.Length <= i)
+                    {
+                        continue;
+                    }
+                    
+                    for (int k = 0; k < input.Labels[i].Length; ++k)
+                    {
+                        int a = input.WhoLabeled[i][k];
+                        goldLabelMarginal *= spamming[a][0] * thetas[a][input.Labels[i][k]] + (j == input.Labels[i][k] ? spamming[a][1] : 0.0);
+                    }
+
+                    if (controlLabels.ContainsKey(i) && (!controlLabels.TryGetValue(i, out int val) || val != j))
+                    {
+                        continue;
+                    }
+                    
+                    instanceMarginal += goldLabelMarginal;
+                    goldLabelMarginals[i][j] = goldLabelMarginal;
+                }
+
+                if (input.Labels.Length < i)
+                {
+                    continue;
+                }
+
+                logMarginalLikeliHood += Math.Log(instanceMarginal);
+
+                for (int j = 0; j < input.Labels[i].Length; ++j)
+                {
+                    int a = input.WhoLabeled[i][j];
+                    double strategyMarginal = 0.0;
+       
+                    if (controlLabels.ContainsKey(i))
+                    {
+                        if (controlLabels.TryGetValue(i, out int val) && val == input.Labels[i][j])
+                        {
+                            strategyMarginal += goldLabelMarginals[i][val] / (spamming[a][0] * thetas[a][input.Labels[i][j]] + (val == input.Labels[i][j] ? spamming[a][1] : 0.0));
+                            strategyMarginal *= spamming[a][0] * thetas[a][input.Labels[i][j]];
+                            double strategyMarginalOverInstanceMarginal = strategyMarginal / instanceMarginal;
+                            strategyExpectedCounts[a][input.Labels[i][j]] += strategyMarginalOverInstanceMarginal;
+                            knowingExpectedCounts[a][0] += strategyMarginalOverInstanceMarginal;
+                            knowingExpectedCounts[a][1] += goldLabelMarginals[i][input.Labels[i][j]] * spamming[a][1] / (spamming[a][0] * thetas[a][input.Labels[i][j]] + spamming[a][1]) / instanceMarginal;
+                        }
+                        else
+                        {
+                            strategyExpectedCounts[a][input.Labels[i][j]]++;
+                            knowingExpectedCounts[a][0]++;
+                        }
+                    }
+                    else
+                    {
+                        for (int k = 0; k < nLabels; ++k)
+                        {
+                            strategyMarginal += goldLabelMarginals[i][k] / (spamming[a][0] * thetas[a][input.Labels[i][j]] + (k == input.Labels[i][j] ? spamming[a][1] : 0.0));
+                        }
+
+                        strategyMarginal *= spamming[a][0] * thetas[a][input.Labels[i][j]];
+                        double strategyMarginalOverInstanceMarginal = strategyMarginal / instanceMarginal;
+                        strategyExpectedCounts[a][input.Labels[i][j]] += strategyMarginalOverInstanceMarginal;
+                        knowingExpectedCounts[a][0] += strategyMarginalOverInstanceMarginal;
+                        knowingExpectedCounts[a][1] += goldLabelMarginals[i][input.Labels[i][j]] * spamming[a][1] / (spamming[a][0] * thetas[a][input.Labels[i][j]] + spamming[a][1]) / instanceMarginal;
+                    }
+                }
             }
         }
     }
