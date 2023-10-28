@@ -29,4 +29,13 @@ public class Tests
     {
         Assert.That(!Math2.IsPrime(n));
     }
+
+    [Test]
+    [TestCase(8, 11.541560327111707d)]
+    [TestCase(15, 21.64042561333445d)]
+    [TestCase(18, 25.968510736001342d)]
+    public void TestNaturalLogToBase2Log(double n, double expected)
+    {
+        Assert.That(Utils.EqualsWithinTolerance(Math2.NaturalLogToBase2Log(n), expected));
+    }
 }

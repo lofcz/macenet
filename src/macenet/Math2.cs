@@ -2,8 +2,9 @@ namespace macenet;
 
 public static class Math2
 {
-    public const double GoldenRatio = 1.618033988749895d;
-
+    public const double GoldenRatio = 1.618033988749895d; // (1 + Math.Sqrt(5)) / 2.0
+    public const double Ln2 = 0.6931471805599453d; // Math.Log(2)
+    
     public static readonly long[] FibSequence = new long[]
     {
         1L,
@@ -130,5 +131,10 @@ public static class Math2
         return true;
     }
 
+    public static double NaturalLogToBase2Log(double n)
+    {
+        return n / Ln2;
+    }
+    
     
 }
