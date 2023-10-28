@@ -4,6 +4,23 @@ public static class Math2
 {
     public const double GoldenRatio = 1.618033988749895d; // (1 + Math.Sqrt(5)) / 2.0
     public const double Ln2 = 0.6931471805599453d; // Math.Log(2)
+    public const double Pi = 3.141592653589793d; // Math.PI
+    public const double Sqrt2Pi = 2.5066282746310002d; // Math.Sqrt(2.0 * Pi)
+
+    // g=7, n=9
+    // high precision: https://www.mrob.com/pub/ries/lanczos-gamma.html (ctrl+f 676.520368121885098567009190444019)
+    public static readonly double[] LanczosCoeffs = new double[]
+    {
+        0.99999999999980993d,
+        676.5203681218851d,
+        -1259.1392167224028d,
+        771.32342877765313d,
+        -176.61502916214059d,
+        12.507343278686905d,
+        -0.13857109526572012d,
+        9.9843695780195716e-6d,
+        1.5056327351493116e-7d
+    };
     
     public static readonly long[] FibSequence = new long[]
     {
@@ -139,5 +156,42 @@ public static class Math2
     public static double Log2(double n)
     {
         return NaturalLogToBase2Log(Math.Log(n));
+    }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="n">In range of [0.5, 1.5]</param>
+    /// <returns></returns>
+    public static double LanczosGamma(double n)
+    {
+        double nMinus1 = n - 1;
+        double x = LanczosCoeffs[0];
+
+        for (int i = 1; i < LanczosCoeffs.Length - 2; ++i)
+        {
+            x += LanczosCoeffs[i] / (nMinus1 + i);
+        }
+
+        double t = nMinus1 + (LanczosCoeffs.Length - 2) + 0.5;
+        return Sqrt2Pi * Math.Pow(t, nMinus1 + 0.5) * Math.Exp(-t) * x;
+    }
+
+    public static double Log2Gamma(double n)
+    {
+        if (n < 0.5)
+        {
+            return Log2(Pi) - Log2(double.Sin(Pi * n)) - Log2Gamma(1.0 - n);
+        }
+
+        double result = 0;
+
+        while (n > 1.5)
+        {
+            result += Log2(n - 1);
+            n--;
+        }
+
+        return result + Log2(LanczosGamma(n));
     }
 }
