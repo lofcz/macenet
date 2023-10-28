@@ -2,6 +2,9 @@
 macenet/.idea/
 macenet/bin/
 macenet/obj/
-macenet.tests/.idea/
-macenet.tests/.bin/
-macenet.tests/.obj/
+macenet/macenet/.idea/
+macenet/macenet/.bin/
+macenet/macenet/.obj/
+macenet/macenet.tests/.idea/
+macenet/macenet.tests/.bin/
+macenet/macenet.tests/.obj/
