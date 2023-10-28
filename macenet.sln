@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet", "macenet\macenet.csproj", "{1739964B-0617-4AD5-BC80-1EC62C2FD89B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet", "src\macenet\macenet.csproj", "{1739964B-0617-4AD5-BC80-1EC62C2FD89B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet.tests", "macenet.tests\macenet.tests.csproj", "{205DDFC9-A7BB-4CB3-9A7B-8EDCD56496DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet.tests", "src\macenet.tests\macenet.tests.csproj", "{205DDFC9-A7BB-4CB3-9A7B-8EDCD56496DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
