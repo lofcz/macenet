@@ -38,6 +38,8 @@ public class MaceTests
             Assert.That(result.Labels.Length is 3);
             Assert.That(result.Labels[2][0] is 1);
             Assert.That(result.Labels[1][2] is 0);
+            Assert.That(result.LabelOptions.Count is 2);
+            Assert.That(result.Annotators.Count is 3);
         });
     }
 }

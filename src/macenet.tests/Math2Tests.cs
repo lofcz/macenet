@@ -85,4 +85,23 @@ public class Math2Tests
     {
         Assert.That(Utils.EqualsWithinTolerance(Math2.Digamma(n), expected));
     }
+
+    [Test]
+    public void TestNormalizeInPlace()
+    {
+        double[][] mat = {
+            new[] { 1.0, 0.87 },
+            new[] { 3.24, 8.55 }
+        };
+        
+        Math2.NormalizeInPlace(mat, 0);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(Utils.EqualsWithinTolerance(mat[0][0], 0.53475935828877d));
+            Assert.That(Utils.EqualsWithinTolerance(mat[0][1], 0.4652406417112299d));
+            Assert.That(Utils.EqualsWithinTolerance(mat[1][0], 0.2748091603053435d));
+            Assert.That(Utils.EqualsWithinTolerance(mat[1][1], 0.7251908396946565));
+        });
+    }
 }

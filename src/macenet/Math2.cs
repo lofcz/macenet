@@ -285,4 +285,25 @@ public static class Math2
 
         return acc + digamma;
     }
+
+    public static void NormalizeInPlace(double[][] mat, double smoothing)
+    {
+        foreach (double[] t in mat)
+        {
+            double norm = 0;
+
+            for (int j = 0; j < mat[0].Length; ++j)
+            {
+                norm += t[j] + smoothing;
+            }
+
+            for (int j = 0; j < mat[0].Length; ++j)
+            {
+                if (norm > 0)
+                {
+                    t[j] = (t[j] + smoothing) / norm;
+                }
+            }
+        }
+    }
 }
