@@ -1,6 +1,6 @@
 namespace macenet.tests;
 
-public class Tests
+public class Math2Tests
 {
     [SetUp]
     public void Setup()
