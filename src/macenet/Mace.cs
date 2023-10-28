@@ -124,17 +124,27 @@ public static class Mace
         double[][] strategyExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
         double[][] knowingExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
         double smoothing = settings.Smoothing / nLabels;
-
         Dictionary<int, int> controlLabels = new Dictionary<int, int>();
-
         double[][] bestThetas = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
         double[][] bestStrategies = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
-        double bestLogMarginalLikelihood = 0;
+        double bestLogMarginalLikelihood = double.NegativeInfinity;
         int bestModelAtRestart = 0;
 
         for (int i = 0; i < settings.Restarts; i++)
         {
-            Run();
+            Run(i + 1);
+        }
+
+        if (settings.Test is null || settings.Test.FinalStep is MaceTestSettings.StepToEnd.RunToEnd)
+        {
+            logMarginalLikeliHood = bestLogMarginalLikelihood;
+            spamming = bestThetas;
+            thetas = bestStrategies;
+        
+            EStep();
+            string[] predictions = Decode(settings.Threshold);
+
+            int n = 0;
         }
 
         if (settings.Test is not null)
@@ -150,7 +160,7 @@ public static class Mace
         
         return result;
 
-        void Run()
+        void Run(int index)
         {
             InitializeRun();
 
@@ -173,6 +183,14 @@ public static class Mace
             {
                 MStep();
                 EStep();
+            }
+
+            if (logMarginalLikeliHood > bestLogMarginalLikelihood)
+            {
+                bestModelAtRestart = index;
+                bestLogMarginalLikelihood = logMarginalLikeliHood;
+                Array.Copy(spamming, bestThetas, spamming.Length);
+                Array.Copy(thetas, bestStrategies, thetas.Length);
             }
         }
         
@@ -307,7 +325,100 @@ public static class Mace
 
         void MStep()
         {
-            
+            spamming = Math2.VariationalNormalize(knowingExpectedCounts, thetaPriors);
+            thetas = Math2.VariationalNormalize(strategyExpectedCounts, strategyPriors);
+        }
+
+        string[] Decode(double threshold)
+        {
+            entropies = GetLabelEntropies();
+            double[] slice = Utils.CreateJaggedArray<double[]>(entropies.Length);
+            Array.Copy(entropies, 0, slice, 0, nInstances);
+            double entropyThreshold = GetEntropyForThreshold(threshold, slice);
+
+            string[] r = new string[nInstances];
+
+            for (int i = 0; i < nInstances; ++i)
+            {
+                double bestProb = double.NegativeInfinity;
+                int bestLabel = -1;
+
+                if (entropies[i] <= entropyThreshold)
+                {
+                    if (entropies[i] is double.NegativeInfinity)
+                    {
+                        r[i] = string.Empty;
+                    }
+                    else
+                    {
+                        for (int j = 0; j < nLabels; ++j)
+                        {
+                            if (goldLabelMarginals[i][j] > bestProb)
+                            {
+                                bestProb = goldLabelMarginals[i][j];
+                                bestLabel = j;
+                            }
+
+                            r[i] = bestLabel.ToString();
+                        }
+                    }
+                }
+                else
+                {
+                    r[i] = string.Empty;
+                }
+            }
+
+            return r;
+        }
+
+        double[] GetLabelEntropies()
+        {
+            double[] r = new double[nInstances];
+
+            for (int i = 0; i < nInstances; ++i)
+            {
+                if (input.Labels.Length < i)
+                {
+                    r[i] = double.NegativeInfinity;
+                    continue;
+                }
+
+                double norm = 0.0;
+                double entropy = 0.0;
+
+                for (int j = 0; j < nLabels; ++j)
+                {
+                    norm += goldLabelMarginals[i][j];
+                }
+
+                for (int j = 0; j < nLabels; ++j)
+                {
+                    double p = goldLabelMarginals[i][j] / norm;
+
+                    if (p > 0)
+                    {
+                        entropy += -p * Math.Log(p);
+                    }
+                }
+
+                r[i] = entropy;
+            }
+
+            return r;
+        }
+
+        double GetEntropyForThreshold(double threshold, double[] entropyArray)
+        {
+            int pivot = threshold switch
+            {
+                0 => 0,
+                1 => nInstances - 1,
+                _ => (int)(nInstances * threshold)
+            };
+
+            Array.Sort(entropyArray);
+            return entropyArray[pivot];
         }
     }
 }
