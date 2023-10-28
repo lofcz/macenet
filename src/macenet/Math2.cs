@@ -135,6 +135,9 @@ public static class Math2
     {
         return n / Ln2;
     }
-    
-    
+
+    public static double Log2(double n)
+    {
+        return NaturalLogToBase2Log(Math.Log(n));
+    }
 }

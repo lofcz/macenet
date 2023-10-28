@@ -38,4 +38,13 @@ public class Tests
     {
         Assert.That(Utils.EqualsWithinTolerance(Math2.NaturalLogToBase2Log(n), expected));
     }
+    
+    [Test]
+    [TestCase(545, 9.090112419664289d)]
+    [TestCase(13, 3.700439718141092d)]
+    [TestCase(18, 4.169925001442312d)]
+    public void TestLog2(double n, double expected)
+    {
+        Assert.That(Utils.EqualsWithinTolerance(Math2.Log2(n), expected));
+    }
 }
