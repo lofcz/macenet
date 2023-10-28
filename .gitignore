@@ -1,0 +1,7 @@
+.idea/
+macenet/.idea/
+macenet/bin/
+macenet/obj/
+macenet.tests/.idea/
+macenet.tests/.bin/
+macenet.tests/.obj/
