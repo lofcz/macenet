@@ -1,5 +1,5 @@
 # MACE .NET (Multi-Annotator Competence Estimation)
-Unofficial port of [MACE Reference Implementation](https://github.com/dirkhovy/MACE) for the .NET platform. Unlike the reference implementation, MACE .NET is targeted as a library. Not every option from the reference implementation is supported, the input format was changed for a better ergonomy, and a few edits to the math used were done.
+Unofficial port of the [MACE Reference Implementation](https://github.com/dirkhovy/MACE) for the .NET platform. Unlike the reference implementation, MACE .NET is targeted as a library. Not every option from the reference implementation is supported, the input format was changed for better ergonomy, and a few edits to the math used were done.
 
 Please see:
 
