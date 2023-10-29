@@ -12,6 +12,13 @@ namespace macenet;
 /// <param name="Choice">Index of the annotator's choice, this must start from 1 and be sequential with no gaps</param>
 public record MaceAnnotation(int Annotator, int Item, int Choice);
 
+/// <summary>
+/// Represents a control, ground truth label (<see cref="Choice"/>) of a given <see cref="Item"/>
+/// </summary>
+/// <param name="Item"></param>
+/// <param name="Choice"></param>
+public record MaceControlLabel(int Item, int Choice);
+
 public record MaceInput(int[][] WhoLabeled, int[][] Labels, HashSet<int> LabelOptions, HashSet<int> Annotators);
 
 public class MaceTestInit
@@ -56,10 +63,25 @@ public class MaceTestResult
     public double[][] GoldLabelMarginals { get; set; }
 }
 
-public class MaceResult 
+public class MaceResultItem
 {
+    public int Item { get; set; }
+    public MaceLabel GoldLabel { get; set; } = default!;
+    public List<MaceLabel> Labels { get; set; } = new List<MaceLabel>();
+}
+
+public record MaceLabel(int Option, double Trust)
+{
+    public override string ToString()
+    {
+        return $"Option {Option}, trust {Trust:N5}%";
+    }
+}
     
-    public MaceTestResult? TestResult { get; set; }
+public class MaceResult
+{
+    public MaceResultItem[] Items { get; internal set; } = default!;
+    public MaceTestResult? TestResult { get; internal set; }
 }
 
 public static class Mace
@@ -108,7 +130,7 @@ public static class Mace
         return new MaceInput(whoLabeledArr, labelsArr, options, annotators);
     }
     
-    public static MaceResult Evaluate(IEnumerable<MaceAnnotation> annotations, MaceSettings? settings = null)
+    public static MaceResult Evaluate(IEnumerable<MaceAnnotation> annotations, MaceSettings? settings = null, IEnumerable<MaceControlLabel>? controlLabels = null)
     {
         MaceResult result = new MaceResult();
         settings ??= MaceSettings.Default;
@@ -124,11 +146,19 @@ public static class Mace
         double[][] strategyExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
         double[][] knowingExpectedCounts = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
         double smoothing = settings.Smoothing / nLabels;
-        Dictionary<int, int> controlLabels = new Dictionary<int, int>();
+        Dictionary<int, int> controlLabelsDict = new Dictionary<int, int>();
         double[][] bestThetas = Utils.CreateJaggedArray<double[][]>(nAnnotators, 2);
         double[][] bestStrategies = Utils.CreateJaggedArray<double[][]>(nAnnotators, nLabels);
         double bestLogMarginalLikelihood = double.NegativeInfinity;
         int bestModelAtRestart = 0;
+
+        if (controlLabels is not null)
+        {
+            foreach (MaceControlLabel label in controlLabels)
+            {
+                controlLabelsDict.TryAdd(label.Item, label.Choice);
+            }
+        }
 
         for (int i = 0; i < settings.Restarts; i++)
         {
@@ -142,7 +172,7 @@ public static class Mace
             thetas = bestStrategies;
         
             EStep();
-            string[] predictions = Decode(settings.Threshold);
+            MaceResultItem[]? predictions = Decode(settings.Threshold);
 
             int n = 0;
         }
@@ -268,7 +298,7 @@ public static class Mace
                         goldLabelMarginal *= spamming[a][0] * thetas[a][input.Labels[i][k]] + (j == input.Labels[i][k] ? spamming[a][1] : 0.0);
                     }
 
-                    if (controlLabels.ContainsKey(i) && (!controlLabels.TryGetValue(i, out int val) || val != j))
+                    if (controlLabelsDict.ContainsKey(i) && (!controlLabelsDict.TryGetValue(i, out int val) || val != j))
                     {
                         continue;
                     }
@@ -289,9 +319,9 @@ public static class Mace
                     int a = input.WhoLabeled[i][j];
                     double strategyMarginal = 0.0;
        
-                    if (controlLabels.ContainsKey(i))
+                    if (controlLabelsDict.ContainsKey(i))
                     {
-                        if (controlLabels.TryGetValue(i, out int val) && val == input.Labels[i][j])
+                        if (controlLabelsDict.TryGetValue(i, out int val) && val == input.Labels[i][j])
                         {
                             strategyMarginal += goldLabelMarginals[i][val] / (spamming[a][0] * thetas[a][input.Labels[i][j]] + (val == input.Labels[i][j] ? spamming[a][1] : 0.0));
                             strategyMarginal *= spamming[a][0] * thetas[a][input.Labels[i][j]];
@@ -329,47 +359,48 @@ public static class Mace
             thetas = Math2.VariationalNormalize(strategyExpectedCounts, strategyPriors);
         }
 
-        string[] Decode(double threshold)
+        MaceResultItem[] Decode(double threshold)
         {
             entropies = GetLabelEntropies();
             double[] slice = Utils.CreateJaggedArray<double[]>(entropies.Length);
             Array.Copy(entropies, 0, slice, 0, nInstances);
-            double entropyThreshold = GetEntropyForThreshold(threshold, slice);
-
-            string[] r = new string[nInstances];
-
+            MaceResultItem[] items = new MaceResultItem[nInstances];
+            
             for (int i = 0; i < nInstances; ++i)
             {
                 double bestProb = double.NegativeInfinity;
                 int bestLabel = -1;
 
-                if (entropies[i] <= entropyThreshold)
+                items[i] = new MaceResultItem { Item = i };
+                
+                if (entropies[i] is not double.NegativeInfinity)
                 {
-                    if (entropies[i] is double.NegativeInfinity)
-                    {
-                        r[i] = string.Empty;
-                    }
-                    else
-                    {
-                        for (int j = 0; j < nLabels; ++j)
-                        {
-                            if (goldLabelMarginals[i][j] > bestProb)
-                            {
-                                bestProb = goldLabelMarginals[i][j];
-                                bestLabel = j;
-                            }
+                    double distribSum = 0;
 
-                            r[i] = bestLabel.ToString();
-                        }
+                    for (int j = 0; j < nLabels; ++j)
+                    {
+                        distribSum += goldLabelMarginals[i][j];
                     }
-                }
-                else
-                {
-                    r[i] = string.Empty;
+
+                    for (int j = 0; j < nLabels; ++j)
+                    {
+                        items[i].Labels.Add(new MaceLabel(j, goldLabelMarginals[i][j] / distribSum * 100));
+
+                        if (!(goldLabelMarginals[i][j] > bestProb))
+                        {
+                            continue;
+                        }
+                        
+                        bestProb = goldLabelMarginals[i][j];
+                        bestLabel = j;
+                    }
+
+                    items[i].GoldLabel = new MaceLabel(bestLabel, bestProb / distribSum * 100);
+                    items[i].Labels = items[i].Labels.OrderByDescending(x => x.Trust).ToList();
                 }
             }
 
-            return r;
+            return items;
         }
 
         double[] GetLabelEntropies()

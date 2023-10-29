@@ -55,8 +55,13 @@ public class MaceTests
             new MaceAnnotation(2, 1, 0),
             new MaceAnnotation(2, 2, 1)
         };
+
+        List<MaceControlLabel> controls = new List<MaceControlLabel>
+        {
+            new MaceControlLabel(0, 1)
+        };
         
-        Mace.Evaluate(annotations);
+        Mace.Evaluate(annotations, null, controls);
     }
 
     [Test]
