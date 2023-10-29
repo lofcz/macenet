@@ -2,29 +2,15 @@ namespace macenet;
 
 internal static class Utils
 {
-    public static T CreateJaggedArray<T>(params int[] lengths)
+    public static double[][] CreateJaggedArray2D(int len1, int len2)
     {
-        return (T)InitializeJaggedArray(typeof(T).GetElementType(), 0, lengths)!;
-    }
+        double[][] array = new double[len1][];
 
-    private static object? InitializeJaggedArray(Type? type, int index, int[] lengths)
-    {
-        if (type != null)
+        for (int i = 0; i < len1; i++)
         {
-            Array array = Array.CreateInstance(type, lengths[index]);
-            Type? elementType = type.GetElementType();
-
-            if (elementType != null)
-            {
-                for (int i = 0; i < lengths[index]; i++)
-                {
-                    array.SetValue(InitializeJaggedArray(elementType, index + 1, lengths), i);
-                }
-            }
-
-            return array;
+            array[i] = new double[len2];
         }
 
-        return null;
+        return array;
     }
 }

@@ -309,7 +309,7 @@ public static class Math2
 
     public static double[][] VariationalNormalize(double[][] mat, double[][] hyperparameters)
     {
-        double[][] result = Utils.CreateJaggedArray<double[][]>(mat.Length, mat[0].Length);
+        double[][] result = Utils.CreateJaggedArray2D(mat.Length, mat[0].Length);
 
         for (int i = 0; i < result.Length; ++i)
         {
