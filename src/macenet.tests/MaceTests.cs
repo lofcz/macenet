@@ -189,4 +189,35 @@ public class MaceTests
         
         MaceResult result = Mace.Evaluate(annotations);
     }
+    
+    [Test]
+    public void MaceCallbackTest()
+    {
+        List<MaceAnnotation> annotations = new List<MaceAnnotation>
+        {
+            new MaceAnnotation(5, 0, 5),
+            new MaceAnnotation(5, 1, 5),
+            new MaceAnnotation(6, 0, 8),
+            new MaceAnnotation(6, 1, 5),
+            new MaceAnnotation(7, 1, 5),
+            new MaceAnnotation(7, 2, 8)
+        };
+
+        int iterations = 0;
+        
+        MaceResult result = Mace.Evaluate(annotations, new MaceSettings
+        {
+            Restarts = 1,
+            Iterations = 10,
+            Callbacks = new MaceCallbackSettings
+            {
+                OnIteration = (iteration, run) =>
+                {
+                    iterations++;
+                }
+            }
+        });
+        
+        Assert.That(iterations, Is.EqualTo(10));
+    }
 }

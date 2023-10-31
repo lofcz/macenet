@@ -83,6 +83,16 @@ public class MaceSettings
     public double Beta { get; set; } = 0.5;
     public double Threshold { get; set; } = 1;
     public MaceTestSettings? Test { get; set; }
+    public MaceCallbackSettings? Callbacks { get; set; }
+}
+
+public class MaceCallbackSettings
+{
+    /// <summary>
+    /// First param in the iteration, second the restart index
+    /// </summary>
+    public Action<int, int>? OnIteration;
+    public Action<int>? OnRestart;
 }
 
 public class MaceTestResult

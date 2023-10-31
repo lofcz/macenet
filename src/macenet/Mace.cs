@@ -95,6 +95,7 @@ public static class Mace
         for (int i = 0; i < settings.Restarts; i++)
         {
             Run(i + 1);
+            settings.Callbacks?.OnRestart?.Invoke(i);
         }
 
         if (settings.Test is null || settings.Test.FinalStep is MaceTestSettings.StepToEnd.RunToEnd)
@@ -163,6 +164,8 @@ public static class Mace
             {
                 MStep();
                 EStep();
+
+                settings.Callbacks?.OnIteration?.Invoke(i, index);
             }
 
             if (!(logMarginalLikeliHood > bestLogMarginalLikelihood))
