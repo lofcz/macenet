@@ -81,7 +81,6 @@ public class MaceSettings
     public double Noise { get; set; } = 0.5;
     public double Alpha { get; set; } = 0.5;
     public double Beta { get; set; } = 0.5;
-    public double Smoothing { get; set; } = 0.01;
     public double Threshold { get; set; } = 1;
     public MaceTestSettings? Test { get; set; }
 }
