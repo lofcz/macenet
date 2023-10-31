@@ -152,4 +152,41 @@ public class MaceTests
         Assert.That(Utils.EqualsWithinTolerance(result.TestResult.GoldLabelMarginals[2][0], 0.11895362829986358));
         Assert.That(Utils.EqualsWithinTolerance(result.TestResult.GoldLabelMarginals[2][1], 0.39716444351303426));
     }
+
+    [Test]
+    public void MaceNonsequentialAnnotators()
+    {
+        List<MaceAnnotation> annotations = new List<MaceAnnotation>
+        {
+            new MaceAnnotation(5, 0, 0),
+            new MaceAnnotation(5, 1, 0),
+            new MaceAnnotation(6, 0, 1),
+            new MaceAnnotation(6, 1, 0),
+            new MaceAnnotation(7, 1, 0),
+            new MaceAnnotation(7, 2, 1)
+        };
+
+        List<MaceControlLabel> controls = new List<MaceControlLabel>
+        {
+            new MaceControlLabel(0, 1)
+        };
+        
+        MaceResult result = Mace.Evaluate(annotations, null, controls);
+    }
+    
+    [Test]
+    public void MaceNonsequentialChoices()
+    {
+        List<MaceAnnotation> annotations = new List<MaceAnnotation>
+        {
+            new MaceAnnotation(5, 0, 5),
+            new MaceAnnotation(5, 1, 5),
+            new MaceAnnotation(6, 0, 8),
+            new MaceAnnotation(6, 1, 5),
+            new MaceAnnotation(7, 1, 5),
+            new MaceAnnotation(7, 2, 8)
+        };
+        
+        MaceResult result = Mace.Evaluate(annotations);
+    }
 }

@@ -5,10 +5,14 @@ public static class Mace
     public static MaceInput ParseInput(List<MaceAnnotation> annotations)
     {
         int items = annotations.Max(x => x.Item) + 1;
+        int nOptions = 0;
+        int nAnnotators = 0;
         List<List<int>> whoLabeled = new();
         List<List<int>> labels = new();
-        HashSet<int> options = new();
-        HashSet<int> annotators = new();
+        Dictionary<int, int> options = new();
+        Dictionary<int, int> annotators = new();
+        Dictionary<int, int> optionsParse = new();
+        Dictionary<int, int> annotatorsParse = new();
 
         for (int i = 0; i < items; i++)
         {
@@ -18,10 +22,29 @@ public static class Mace
             
         foreach (MaceAnnotation annotation in annotations)
         {
-            whoLabeled[annotation.Item].Add(annotation.Annotator);
-            labels[annotation.Item].Add(annotation.Choice);
-            options.Add(annotation.Choice);
-            annotators.Add(annotation.Annotator);
+            if (!options.ContainsValue(annotation.Choice))
+            {
+                options.Add(nOptions, annotation.Choice);
+                optionsParse.Add(annotation.Choice, nOptions);
+                nOptions++;
+            }
+            
+            if (!annotators.ContainsValue(annotation.Annotator))
+            {
+                annotators.Add(nAnnotators, annotation.Annotator);
+                annotatorsParse.Add(annotation.Annotator, nAnnotators);
+                nAnnotators++;
+            }
+
+            if (annotatorsParse.TryGetValue(annotation.Annotator, out int aIndex))
+            {
+                whoLabeled[annotation.Item].Add(aIndex);    
+            }
+
+            if (optionsParse.TryGetValue(annotation.Choice, out int cIndex))
+            {
+                labels[annotation.Item].Add(cIndex);   
+            }
         }
 
         int[][] whoLabeledArr = new int[items][];
@@ -76,14 +99,32 @@ public static class Mace
 
         if (settings.Test is null || settings.Test.FinalStep is MaceTestSettings.StepToEnd.RunToEnd)
         {
-            logMarginalLikeliHood = bestLogMarginalLikelihood;
             spamming = bestThetas;
             thetas = bestStrategies;
         
             EStep();
-            MaceResultItem[]? predictions = Decode(settings.Threshold);
+            MaceResultItemLabel[]? predictions = Decode(settings.Threshold);
 
-            int n = 0;
+            result.BestLogMarginalLikelihood = bestLogMarginalLikelihood;
+            result.BestModelAtRestart = bestModelAtRestart;
+            result.Labels = predictions;
+            result.Annotators = new MaceResultAnnotatorReliability[nAnnotators];
+
+            for (int i = 0; i < nAnnotators; i++)
+            {
+                if (input.Annotators.TryGetValue(i, out int aI))
+                {
+                    result.Annotators[i] = new MaceResultAnnotatorReliability(aI, spamming[i][1] * 100);   
+                }
+            }
+
+            result.Entropies = new MaceResultItemEntropy[nInstances];
+            entropies = GetLabelEntropies();
+            
+            for (int i = 0; i < nInstances; i++)
+            {
+                result.Entropies[i] = new MaceResultItemEntropy(i, entropies[i]);
+            }
         }
 
         if (settings.Test is not null)
@@ -270,19 +311,19 @@ public static class Mace
             thetas = Math2.VariationalNormalize(strategyExpectedCounts, strategyPriors);
         }
 
-        MaceResultItem[] Decode(double threshold)
+        MaceResultItemLabel[] Decode(double threshold)
         {
             entropies = GetLabelEntropies();
             double[] slice = new double[entropies.Length];
             Array.Copy(entropies, 0, slice, 0, nInstances);
-            MaceResultItem[] items = new MaceResultItem[nInstances];
+            MaceResultItemLabel[] items = new MaceResultItemLabel[nInstances];
             
             for (int i = 0; i < nInstances; ++i)
             {
                 double bestProb = double.NegativeInfinity;
                 int bestLabel = -1;
 
-                items[i] = new MaceResultItem { Item = i };
+                items[i] = new MaceResultItemLabel { Item = i };
                 
                 if (entropies[i] is not double.NegativeInfinity)
                 {
