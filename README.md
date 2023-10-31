@@ -11,7 +11,7 @@ A high-level overview of MACE is available [here](https://toloka.ai/docs/crowd-k
 ## Getting started
 
 Create a dataset for labeling, consisting of N items, where each item will be labeled from the same pool of labels by at least one annotator. Each annotator can assign only one label from the pool (no multi-labeling).
-For example, here is a dataset of three pictures. Each of them we need to classify as a dog or cat. We will assign each possible label a unique `int32` value. Let `0 = dog`, `1 = cat`.  
+For example, here is a dataset of three pictures. Each of them we need to classify as a dog or a cat. We will assign each possible label a unique `int32` value. Let `0 = dog`, `1 = cat`.  
 
 ![fatcat](https://github.com/lofcz/macenet/assets/10260230/e55b43ed-57fb-46a1-8b46-938fdd0dbdcd)
 ![bingus](https://github.com/lofcz/macenet/assets/10260230/1b343f36-0d0e-4ef3-afe7-1a659d630d69)
