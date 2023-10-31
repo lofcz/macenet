@@ -138,3 +138,8 @@ List<MaceControlLabel> controls = new List<MaceControlLabel>
 
 MaceResult result = Mace.Evaluate(annotations, null, controls);
 ```
+
+## Acknowledgments
+
+[Dirk Hovy](https://github.com/dirkhovy) et. al for creating the reference implementation.  
+[Aneta Kahleová](https://github.com/anetakahle) for help with understanding the original manuscript.
