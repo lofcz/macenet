@@ -118,7 +118,7 @@ The `Mace.Evaluate` routine can take a second argument with various settings. Ea
 
 ## Control Labels
 
-We can help the algorithm by mixing a few items with known (ground truth) labels. These are sometimes called "control". This can be done by providing a third parameter to the `Mace.Evaluate` routine:
+We can help the algorithm by including a few items with known (ground truth) labels. These are sometimes called "control". This can be done by providing a third parameter to the `Mace.Evaluate` routine:
 
 ```cs
 List<MaceAnnotation> annotations = new List<MaceAnnotation>
