@@ -114,6 +114,7 @@ The `Mace.Evaluate` routine can take a second argument with various settings. Ea
 - `Noise` - represents default bias toward randomly considering an annotator more or less reliable.
 - `Restarts` - the amount of times we run the algorithm. As this is an EM-based technique, when oscillating efficiency and maximization steps we can diverge more and more.
 - `Iterations` - the amount of times EM steps will be run, both steps are considered as one iteration.
+- `Callbacks` - in case of need to track the progress, you can listen for it here. Note that this blocks the execution, avoid slow logic here.
 
 ## Control Labels
 
@@ -138,6 +139,10 @@ List<MaceControlLabel> controls = new List<MaceControlLabel>
 
 MaceResult result = Mace.Evaluate(annotations, null, controls);
 ```
+
+## Demo
+
+There is a demo console application available in `/src/macenet.demo`.
 
 ## Acknowledgments
 
