@@ -1,3 +1,5 @@
+![Nuget](https://img.shields.io/nuget/v/macenet)
+
 # MACE .NET (Multi-Annotator Competence Estimation)
 Unofficial port of the [MACE Reference Implementation](https://github.com/dirkhovy/MACE) for the .NET platform. Unlike the reference implementation, MACE .NET is targeted as a library. Not every option from the reference implementation is supported, the input format was changed for better ergonomy, and a few edits to the math used were done.
 
@@ -9,6 +11,10 @@ Dirk Hovy, Taylor Berg-Kirkpatrick, Ashish Vaswani, and Eduard Hovy (2013): **Le
 A high-level overview of MACE is available [here](https://toloka.ai/docs/crowd-kit/reference/crowdkit.aggregation.classification.mace.MACE/).
 
 ## Getting started
+
+```
+Install-Package macenet
+```
 
 Create a dataset for labeling, consisting of N items, where each item will be labeled from the same pool of labels by at least one annotator. Each annotator can assign only one label from the pool (no multi-labeling).
 For example, here is a dataset of three pictures. Each of them we need to classify as a dog or as a cat. We will assign each possible label a unique `int32` value. Let `0 = dog`, `1 = cat`.  
