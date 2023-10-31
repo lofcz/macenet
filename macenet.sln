@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet", "src\macenet\mace
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet.tests", "src\macenet.tests\macenet.tests.csproj", "{205DDFC9-A7BB-4CB3-9A7B-8EDCD56496DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet.demo", "macenet.demo\macenet.demo.csproj", "{D6868B08-D9B1-42B7-B7C5-6ADAEA51956F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "macenet.demo", "src\macenet.demo\macenet.demo.csproj", "{D6868B08-D9B1-42B7-B7C5-6ADAEA51956F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
