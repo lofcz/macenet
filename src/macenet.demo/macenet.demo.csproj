@@ -9,7 +9,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\macenet\macenet.csproj" />
-      <ProjectReference Include="..\src\macenet\macenet.csproj" />
     </ItemGroup>
 
 </Project>
